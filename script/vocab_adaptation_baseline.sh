@@ -16,8 +16,9 @@ export TGT="biogpt"
 # Baseline uses original Pythia-1B model
 MODEL_NAME="EleutherAI/pythia-1b"
 
-export DATASET_PATH="./data/pretrain-dataset/pile00-${TGT}-tokenized"
-# export DATASET_PATH="./data/pretrain-dataset/pile00-sample-${TGT}-tokenized"
+# Baseline uses Pythia-tokenized dataset (not BioGPT-tokenized)
+export DATASET_PATH="./data/pretrain-dataset/pile00-pythia-tokenized"
+# export DATASET_PATH="./data/pretrain-dataset/pile00-sample-pythia-tokenized"
 
 export CONFIG_FILE="./data/Deepspeed-Configs/zero3.yaml"
 
