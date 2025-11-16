@@ -86,7 +86,7 @@ accelerate launch \
     --use_flash_attn True 2>&1 >$LOG_FILE
 
 # STAGE-2
-MODEL_NAME="./$MODEL_DIR/checkpoint-$NUM_STEPS"
+MODEL_NAME="${MODEL_DIR}/checkpoint-${NUM_STEPS}"
 LR=5e-5
 export TRAIN_START_IDX=2560000
 
