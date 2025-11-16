@@ -6,7 +6,8 @@ from typing import Optional
 from transformers import HfArgumentParser, TrainingArguments, Trainer
 from clm_utils import *
 
-from lr_callback import LRCallback
+# Only import LRCallback if needed (when release_weight is used)
+# from lr_callback import LRCallback
 
 # Define and parse arguments.
 @dataclass
@@ -211,6 +212,7 @@ def main(args):
 
     callbacks = None
     if args.release_weight:
+        from lr_callback import LRCallback
         callbacks = [LRCallback(release_step = args.release_step, decay_weight = args.release_decay)]
 
     # datasets
