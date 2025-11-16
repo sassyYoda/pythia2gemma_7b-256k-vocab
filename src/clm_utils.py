@@ -219,12 +219,14 @@ def create_and_prepare_model(args):
             "Flash V2 support implemented here ignores padding/attention_mask/custom_mask. \n"
             + "It is meant for continued pre-training with packing inputs to consume the entire sequence lengths."
         )
+        # Flash attention is handled via attn_implementation="flash_attention_2" in model loading
+        # The monkey patch is not needed for GPT-NeoX (Pythia) models with transformers >= 4.44
         # from starcoder_flash_attn_monkey_patch import replace_starcoder_attn_with_flash_attn
-        from llama_flash_attn_patch import replace_llama_attn_with_flash_attn
+        # from llama_flash_attn_patch import replace_llama_attn_with_flash_attn
         # from falcon_flash_attn_monkey_patch import replace_falcon_attn_with_flash_attn
 
         # replace_starcoder_attn_with_flash_attn()
-        replace_llama_attn_with_flash_attn()
+        # replace_llama_attn_with_flash_attn()
         # replace_falcon_attn_with_flash_attn()
     device_map = None
     bnb_config = None
