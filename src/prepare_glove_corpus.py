@@ -9,7 +9,7 @@ Total: 1B tokens
 import json
 import argparse
 import os
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from tqdm import tqdm
 from transformers import AutoTokenizer
 import random
@@ -154,6 +154,11 @@ def main():
         help="Random seed (default: 42)"
     )
     parser.add_argument(
+        "--streaming",
+        action="store_true",
+        help="Use streaming mode for datasets (useful for large datasets)"
+    )
+    parser.add_argument(
         "--culturax-dataset",
         type=str,
         default="uonlp/CulturaX",
@@ -204,11 +209,47 @@ def main():
     try:
         print("\n" + "="*60)
         print("Loading CulturaX dataset...")
-        culturax_dataset = load_dataset(args.culturax_dataset, cache_dir=args.cache_dir, streaming=False)
-        if "train" in culturax_dataset:
-            culturax_data = culturax_dataset["train"]
-        else:
-            culturax_data = culturax_dataset[list(culturax_dataset.keys())[0]]
+        
+        # Load multiple languages for multilingual corpus
+        # Using a diverse set of languages covering different language families
+        culturax_languages = [
+            'en', 'zh', 'es', 'fr', 'de', 'ja', 'ko', 'ar', 'hi', 'pt', 
+            'ru', 'it', 'nl', 'tr', 'pl', 'vi', 'th', 'id', 'cs', 'sv',
+            'ro', 'hu', 'da', 'fi', 'no', 'he', 'uk', 'bg', 'el', 'sk'
+        ]
+        
+        culturax_datasets = []
+        print(f"Loading {len(culturax_languages)} languages from CulturaX...")
+        
+        # Note: Streaming mode is disabled for CulturaX when loading multiple languages
+        # because concatenate_datasets requires non-streaming datasets
+        culturax_streaming = False
+        if args.streaming:
+            print("Note: Streaming mode disabled for CulturaX multi-language loading (concatenation required)")
+        
+        for lang in tqdm(culturax_languages, desc="Loading CulturaX languages"):
+            try:
+                lang_dataset = load_dataset(
+                    args.culturax_dataset,
+                    lang,
+                    cache_dir=args.cache_dir,
+                    streaming=culturax_streaming
+                )
+                if "train" in lang_dataset:
+                    culturax_datasets.append(lang_dataset["train"])
+                else:
+                    culturax_datasets.append(lang_dataset[list(lang_dataset.keys())[0]])
+            except Exception as e:
+                print(f"Warning: Could not load CulturaX language '{lang}': {e}")
+                continue
+        
+        if not culturax_datasets:
+            raise Exception("No CulturaX languages could be loaded")
+        
+        # Combine all language datasets
+        print(f"\nCombining {len(culturax_datasets)} language datasets...")
+        culturax_data = concatenate_datasets(culturax_datasets)
+        print(f"Combined CulturaX dataset size: {len(culturax_data):,} examples")
         
         culturax_texts, actual_tokens = sample_from_dataset(
             culturax_data, culturax_tokens, tokenizer, "CulturaX", seed=args.seed
