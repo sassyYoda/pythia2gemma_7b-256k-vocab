@@ -6,9 +6,9 @@ export MAIN_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd ${MAIN_DIR}
 export CACHE_DIR="${MAIN_DIR}/data/cache"
 
-# export TRAIN_FILE="${MAIN_DIR}/data/pretrain-corpus/pubmed-abstract.json"
-# sample corpus for demonstration
-export TRAIN_FILE="${MAIN_DIR}/data/pretrain-corpus/pubmed-abstract.json"
+# export TRAIN_FILE="${MAIN_DIR}/data/pretrain-corpus/pile-corpus.jsonl"
+# Using the GloVe corpus prepared by prepare_glove_corpus.sh
+export TRAIN_FILE="${MAIN_DIR}/data/pretrain-corpus/glove-corpus-1B.jsonl"
 
 # Source Tokenizer
 export MODLE_PATH1="EleutherAI/pythia-1b"

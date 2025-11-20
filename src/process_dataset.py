@@ -227,10 +227,10 @@ class DataTrainingArguments:
         else:
             if self.train_file is not None:
                 extension = self.train_file.split(".")[-1]
-                assert extension in ["csv", "json", "txt"], "`train_file` should be a csv, a json or a txt file."
+                assert extension in ["csv", "json", "jsonl", "txt"], "`train_file` should be a csv, a json, jsonl or a txt file."
             if self.validation_file is not None:
                 extension = self.validation_file.split(".")[-1]
-                assert extension in ["csv", "json", "txt"], "`validation_file` should be a csv, a json or a txt file."
+                assert extension in ["csv", "json", "jsonl", "txt"], "`validation_file` should be a csv, a json, jsonl or a txt file."
 
 
 def prepare_dataset(tokenizer, data_args, model_args, training_args, logger):
@@ -283,6 +283,9 @@ def prepare_dataset(tokenizer, data_args, model_args, training_args, logger):
             dataset_args["keep_linebreaks"] = data_args.keep_linebreaks
             # dataset_args["sample_by"] = "line"
             dataset_args["sample_by"] = "paragraph"
+        elif extension == "jsonl":
+            # JSONL files are handled the same way as JSON files by the datasets library
+            extension = "json"
 
         # if extension == "json":
         #     dataset_args["field"] = "text"

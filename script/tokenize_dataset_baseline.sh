@@ -10,7 +10,7 @@ export CACHE_DIR="${MAIN_DIR}/data/cache"
 export MODLE_PATH="EleutherAI/pythia-1b"
 export TOKENIZER_PATH="EleutherAI/pythia-1b"
 
-export TRAIN_FILE="./data/pretrain-corpus/pubmed-abstract.json"
+export TRAIN_FILE="./data/pretrain-corpus/glove-corpus-1B.jsonl"
 
 # Tokenize with Pythia tokenizer for baseline
 export DATASET_PATH="./data/pretrain-dataset/pile00-pythia-tokenized"
