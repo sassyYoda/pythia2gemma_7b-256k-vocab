@@ -9,7 +9,7 @@ Total: 1B tokens
 import json
 import argparse
 import os
-from datasets import load_dataset, concatenate_datasets
+from datasets import load_dataset
 from tqdm import tqdm
 from transformers import AutoTokenizer
 import random
@@ -18,41 +18,111 @@ def count_tokens(text, tokenizer):
     """Count tokens in text using a tokenizer."""
     return len(tokenizer.encode(text, add_special_tokens=False))
 
-def sample_from_dataset(dataset, target_tokens, tokenizer, dataset_name, seed=42):
+def sample_from_dataset(dataset, target_tokens, tokenizer, dataset_name, seed=42, is_streaming=False):
     """
     Sample from a dataset until we reach approximately target_tokens.
+    Works with both streaming and non-streaming datasets.
     Returns list of texts.
     """
     random.seed(seed)
     texts = []
     total_tokens = 0
-    dataset_size = len(dataset)
     
-    # Shuffle indices
-    indices = list(range(dataset_size))
-    random.shuffle(indices)
+    if is_streaming:
+        # For streaming datasets, iterate directly
+        dataset_size = None
+        dataset_iter = iter(dataset)
+    else:
+        # For non-streaming datasets, use indices
+        dataset_size = len(dataset)
+        indices = list(range(dataset_size))
+        random.shuffle(indices)
+        dataset_iter = None
     
     print(f"\nSampling from {dataset_name}...")
     pbar = tqdm(total=target_tokens, desc=f"Collecting tokens from {dataset_name}")
     
     idx = 0
-    while total_tokens < target_tokens and idx < dataset_size:
-        example = dataset[indices[idx]]
+    while total_tokens < target_tokens:
+        try:
+            if is_streaming:
+                example = next(dataset_iter)
+            else:
+                if idx >= dataset_size:
+                    break
+                example = dataset[indices[idx]]
+            
+            # Extract text field
+            if isinstance(example, dict):
+                text = example.get("text", "")
+            else:
+                text = str(example)
+            
+            if text and len(text.strip()) > 0:
+                tokens = count_tokens(text, tokenizer)
+                if tokens > 0:
+                    texts.append(text)
+                    total_tokens += tokens
+                    pbar.update(tokens)
+            
+            idx += 1
+        except StopIteration:
+            # End of streaming dataset
+            break
+    
+    pbar.close()
+    print(f"Collected {total_tokens:,} tokens from {dataset_name} ({len(texts):,} examples)")
+    return texts, total_tokens
+
+def sample_from_multiple_streaming_datasets(datasets, target_tokens, tokenizer, dataset_name, seed=42):
+    """
+    Sample tokens from multiple streaming datasets proportionally.
+    Uses round-robin approach to ensure diversity across languages.
+    """
+    import itertools
+    random.seed(seed)
+    texts = []
+    total_tokens = 0
+    
+    # Create iterators for all datasets
+    dataset_iters = [iter(ds) for ds in datasets]
+    active_iters = list(range(len(dataset_iters)))
+    
+    print(f"\nSampling from {len(datasets)} {dataset_name} languages (streaming mode)...")
+    pbar = tqdm(total=target_tokens, desc=f"Collecting tokens from {dataset_name}")
+    
+    # Round-robin through active datasets to ensure diversity
+    iter_idx = 0
+    while total_tokens < target_tokens and active_iters:
+        # Get next iterator index (round-robin)
+        idx = active_iters[iter_idx % len(active_iters)]
+        dataset_iter = dataset_iters[idx]
         
-        # Extract text field
-        if isinstance(example, dict):
-            text = example.get("text", "")
-        else:
-            text = str(example)
-        
-        if text and len(text.strip()) > 0:
-            tokens = count_tokens(text, tokenizer)
-            if tokens > 0:
-                texts.append(text)
-                total_tokens += tokens
-                pbar.update(tokens)
-        
-        idx += 1
+        try:
+            example = next(dataset_iter)
+            
+            # Extract text field
+            if isinstance(example, dict):
+                text = example.get("text", "")
+            else:
+                text = str(example)
+            
+            if text and len(text.strip()) > 0:
+                tokens = count_tokens(text, tokenizer)
+                if tokens > 0:
+                    texts.append(text)
+                    total_tokens += tokens
+                    pbar.update(tokens)
+            
+            iter_idx += 1
+        except StopIteration:
+            # This dataset is exhausted, remove it from active list
+            active_iters.remove(idx)
+            if not active_iters:
+                break
+            # Adjust iter_idx if needed
+            if iter_idx >= len(active_iters):
+                iter_idx = 0
     
     pbar.close()
     print(f"Collected {total_tokens:,} tokens from {dataset_name} ({len(texts):,} examples)")
@@ -224,27 +294,21 @@ def main():
             'he', 'sr', 'ta', 'sq', 'az', 'kk', 'ur', 'ka', 'hy', 'is'
         ]
         
+        # Use streaming mode to sample on-the-fly (much more efficient)
+        print(f"Loading {len(culturax_languages)} languages from CulturaX (streaming mode)...")
+        culturax_streaming = True
+        
         culturax_datasets = []
-        print(f"Loading {len(culturax_languages)} languages from CulturaX...")
-        
-        # Note: Streaming mode is disabled for CulturaX when loading multiple languages
-        # because concatenate_datasets requires non-streaming datasets
-        culturax_streaming = False
-        if args.streaming:
-            print("Note: Streaming mode disabled for CulturaX multi-language loading (concatenation required)")
-        
-        for lang in tqdm(culturax_languages, desc="Loading CulturaX languages"):
+        for lang in tqdm(culturax_languages, desc="Initializing CulturaX language streams"):
             try:
                 lang_dataset = load_dataset(
                     args.culturax_dataset,
                     lang,
                     cache_dir=args.cache_dir,
-                    streaming=culturax_streaming
+                    streaming=True,
+                    split="train"
                 )
-                if "train" in lang_dataset:
-                    culturax_datasets.append(lang_dataset["train"])
-                else:
-                    culturax_datasets.append(lang_dataset[list(lang_dataset.keys())[0]])
+                culturax_datasets.append(lang_dataset)
             except Exception as e:
                 print(f"Warning: Could not load CulturaX language '{lang}': {e}")
                 continue
@@ -252,13 +316,9 @@ def main():
         if not culturax_datasets:
             raise Exception("No CulturaX languages could be loaded")
         
-        # Combine all language datasets
-        print(f"\nCombining {len(culturax_datasets)} language datasets...")
-        culturax_data = concatenate_datasets(culturax_datasets)
-        print(f"Combined CulturaX dataset size: {len(culturax_data):,} examples")
-        
-        culturax_texts, actual_tokens = sample_from_dataset(
-            culturax_data, culturax_tokens, tokenizer, "CulturaX", seed=args.seed
+        # Sample tokens from all languages using round-robin (streaming, on-the-fly)
+        culturax_texts, actual_tokens = sample_from_multiple_streaming_datasets(
+            culturax_datasets, culturax_tokens, tokenizer, "CulturaX", seed=args.seed
         )
         all_texts.extend(culturax_texts)
     except Exception as e:
@@ -268,7 +328,7 @@ def main():
     # The Stack (30%)
     try:
         print("\n" + "="*60)
-        print("Loading The Stack dataset...")
+        print("Loading The Stack dataset (streaming mode)...")
         if args.stack_dataset == "bigcode/the-stack":
             # Try data/python subset first
             try:
@@ -276,20 +336,26 @@ def main():
                     args.stack_dataset, 
                     data_dir="data/python",
                     cache_dir=args.cache_dir,
-                    streaming=False
+                    streaming=True,
+                    split="train"
                 )
             except:
-                stack_dataset = load_dataset(args.stack_dataset, cache_dir=args.cache_dir, streaming=False)
+                stack_dataset = load_dataset(
+                    args.stack_dataset, 
+                    cache_dir=args.cache_dir, 
+                    streaming=True,
+                    split="train"
+                )
         else:
-            stack_dataset = load_dataset(args.stack_dataset, cache_dir=args.cache_dir, streaming=False)
-        
-        if "train" in stack_dataset:
-            stack_data = stack_dataset["train"]
-        else:
-            stack_data = stack_dataset[list(stack_dataset.keys())[0]]
+            stack_dataset = load_dataset(
+                args.stack_dataset, 
+                cache_dir=args.cache_dir, 
+                streaming=True,
+                split="train"
+            )
         
         stack_texts, actual_tokens = sample_from_dataset(
-            stack_data, stack_tokens, tokenizer, "The Stack", seed=args.seed + 1
+            stack_dataset, stack_tokens, tokenizer, "The Stack", seed=args.seed + 1, is_streaming=True
         )
         all_texts.extend(stack_texts)
     except Exception as e:
@@ -299,15 +365,16 @@ def main():
     # Proof-Pile-2 (30%)
     try:
         print("\n" + "="*60)
-        print("Loading Proof-Pile-2 dataset...")
-        proof_pile_dataset = load_dataset(args.proof_pile_dataset, cache_dir=args.cache_dir, streaming=False)
-        if "train" in proof_pile_dataset:
-            proof_pile_data = proof_pile_dataset["train"]
-        else:
-            proof_pile_data = proof_pile_dataset[list(proof_pile_dataset.keys())[0]]
+        print("Loading Proof-Pile-2 dataset (streaming mode)...")
+        proof_pile_dataset = load_dataset(
+            args.proof_pile_dataset, 
+            cache_dir=args.cache_dir, 
+            streaming=True,
+            split="train"
+        )
         
         proof_pile_texts, actual_tokens = sample_from_dataset(
-            proof_pile_data, proof_pile_tokens, tokenizer, "Proof-Pile-2", seed=args.seed + 2
+            proof_pile_dataset, proof_pile_tokens, tokenizer, "Proof-Pile-2", seed=args.seed + 2, is_streaming=True
         )
         all_texts.extend(proof_pile_texts)
     except Exception as e:
