@@ -347,30 +347,16 @@ def main():
     try:
         print("\n" + "="*60)
         print("Loading The Stack dataset (streaming mode)...")
-        if args.stack_dataset == "bigcode/the-stack":
-            # Try data/python subset first
-            try:
-                stack_dataset = load_dataset(
-                    args.stack_dataset, 
-                    data_dir="data/python",
-                    cache_dir=args.cache_dir,
-                    streaming=True,
-                    split="train"
-                )
-            except:
-                stack_dataset = load_dataset(
-                    args.stack_dataset, 
-                    cache_dir=args.cache_dir, 
-                    streaming=True,
-                    split="train"
-                )
-        else:
-            stack_dataset = load_dataset(
-                args.stack_dataset, 
-                cache_dir=args.cache_dir, 
-                streaming=True,
-                split="train"
-            )
+        # Note: data_dir parameter doesn't work well with streaming mode
+        # Load full dataset - filtering can be done post-load if needed
+        stack_dataset = load_dataset(
+            args.stack_dataset, 
+            cache_dir=args.cache_dir, 
+            streaming=True,
+            split="train",
+            trust_remote_code=True
+        )
+        print("Note: Using full The Stack dataset (not filtered to Python-only)")
         
         stack_texts, actual_tokens = sample_from_dataset(
             stack_dataset, stack_tokens, tokenizer, "The Stack", seed=args.seed + 1, is_streaming=True
@@ -378,6 +364,8 @@ def main():
         all_texts.extend(stack_texts)
     except Exception as e:
         print(f"Error loading The Stack: {e}")
+        import traceback
+        traceback.print_exc()
         print("Skipping The Stack. Please check dataset availability.")
     
     # Proof-Pile-2 (30%)
