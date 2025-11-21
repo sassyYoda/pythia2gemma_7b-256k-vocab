@@ -63,7 +63,7 @@ echo "  Number of chunks: ${NUM_CHUNKS}"
 echo ""
 
 # Check if chunks already exist
-CHUNK_COUNT=$(ls -1 ${CHUNK_DIR}/pile-corpus-chunk-* 2>/dev/null | wc -l)
+CHUNK_COUNT=$(ls -1 ${CHUNK_DIR}/pile-corpus-chunk-*.jsonl 2>/dev/null | wc -l)
 if [ ${CHUNK_COUNT} -eq ${NUM_CHUNKS} ]; then
     echo "  Chunks already exist, skipping split..."
 else
@@ -73,14 +73,22 @@ else
         echo "Error: Failed to split file"
         exit 1
     }
-    echo "  ✓ File split into chunks"
+    # Rename chunks to add .jsonl extension
+    echo "  Adding .jsonl extension to chunks..."
+    for CHUNK_FILE in ${CHUNK_DIR}/pile-corpus-chunk-*; do
+        # Skip if already has .jsonl extension
+        if [[ ! "$CHUNK_FILE" =~ \.jsonl$ ]]; then
+            mv "$CHUNK_FILE" "${CHUNK_FILE}.jsonl"
+        fi
+    done
+    echo "  ✓ File split into chunks with .jsonl extension"
 fi
 echo ""
 
 # Step 2: Process each chunk (sequential or parallel)
 echo "Step 2: Processing chunks..."
 CHUNK_NUM=1
-CHUNK_FILES=$(ls -1 ${CHUNK_DIR}/pile-corpus-chunk-* | sort)
+CHUNK_FILES=$(ls -1 ${CHUNK_DIR}/pile-corpus-chunk-*.jsonl | sort)
 
 if [ "${PARALLEL_CHUNKS}" -eq 1 ]; then
     # Sequential processing
@@ -91,7 +99,7 @@ if [ "${PARALLEL_CHUNKS}" -eq 1 ]; then
         
         echo "  Processing chunk ${CHUNK_NUM}/${NUM_CHUNKS}: ${CHUNK_NAME}"
         
-        HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python -u src/process_dataset.py \
+        if HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python -u src/process_dataset.py \
             --model_name_or_path ${MODLE_PATH} \
             --tokenizer_name ${TOKENIZER_PATH} \
             --train_file ${CHUNK_FILE} \
@@ -100,14 +108,12 @@ if [ "${PARALLEL_CHUNKS}" -eq 1 ]; then
             --preprocessing_num_workers ${NUM_WORKERS} \
             --block_size ${BLOCK_SIZE} \
             --only_tokenize \
-            --output_dir ./log 2>&1 | tee ./log/process_chunk_${CHUNK_NUM}.log
-        
-        if [ $? -ne 0 ]; then
+            --output_dir ./log 2>&1 | tee ./log/process_chunk_${CHUNK_NUM}.log; then
+            echo "  ✓ Chunk ${CHUNK_NUM} completed"
+        else
             echo "  ✗ Error processing chunk ${CHUNK_NUM}"
             exit 1
         fi
-        
-        echo "  ✓ Chunk ${CHUNK_NUM} completed"
         CHUNK_NUM=$((CHUNK_NUM + 1))
     done
 else
