@@ -20,13 +20,14 @@ export DATASET_PATH="./data/pretrain-dataset/pile00-qwen2-7b-tokenized"
 
 # Chunking settings
 export CHUNK_SIZE=2000000  # Lines per chunk (~2M examples per chunk)
-export NUM_WORKERS=180
+export NUM_WORKERS=20  # Optimized for single GPU setup (26 CPU cores available)
 export BLOCK_SIZE=2048
 
 # Parallel processing settings
-# With 208 CPU cores, we can process multiple chunks simultaneously
-# Each chunk uses ~180 workers, so 2-3 chunks in parallel is safe
-export PARALLEL_CHUNKS=5  # Number of chunks to process in parallel (set to 1 for sequential)
+# With 26 CPU cores and 20 workers per chunk, we can process 1 chunk at a time efficiently
+# Each chunk uses ~20 workers, leaving 6 cores for system/overhead
+# Can do 1 chunk safely, or 2 chunks if you want to push it (but may be slower due to context switching)
+export PARALLEL_CHUNKS=1  # Number of chunks to process in parallel (set to 1 for sequential, 2 max for 26 cores)
 
 # Temporary directory for chunks
 export CHUNK_DIR="./data/pretrain-corpus/chunks"
@@ -38,12 +39,12 @@ mkdir -p ${CHUNK_DIR}
 mkdir -p ${CHUNK_OUTPUT_DIR}
 
 echo "=========================================="
-echo "Chunked Tokenization Script"
+echo "Chunked Tokenization Script (Single GPU, 26 CPU Cores)"
 echo "=========================================="
 echo "Input file: ${TRAIN_FILE}"
 echo "Output path: ${DATASET_PATH}"
 echo "Chunk size: ${CHUNK_SIZE} lines"
-echo "Workers per chunk: ${NUM_WORKERS}"
+echo "Workers per chunk: ${NUM_WORKERS} (26 CPU cores available)"
 echo "Parallel chunks: ${PARALLEL_CHUNKS}"
 echo "=========================================="
 echo ""
