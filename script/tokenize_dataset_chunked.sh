@@ -62,10 +62,26 @@ echo "  Total lines: ${FILE_SIZE}"
 echo "  Number of chunks: ${NUM_CHUNKS}"
 echo ""
 
-# Check if chunks already exist
+# Check if chunks already exist (with or without .jsonl extension)
+CHUNK_COUNT_JSONL=$(ls -1 ${CHUNK_DIR}/pile-corpus-chunk-*.jsonl 2>/dev/null | wc -l)
+CHUNK_COUNT_NO_EXT=$(ls -1 ${CHUNK_DIR}/pile-corpus-chunk-* 2>/dev/null | grep -v "\.jsonl$" | wc -l)
+
+# If we have chunks without .jsonl extension, rename them
+if [ ${CHUNK_COUNT_NO_EXT} -gt 0 ]; then
+    echo "  Found chunks without .jsonl extension, renaming..."
+    for CHUNK_FILE in ${CHUNK_DIR}/pile-corpus-chunk-*; do
+        # Skip if already has .jsonl extension or is a directory
+        if [[ -f "$CHUNK_FILE" && ! "$CHUNK_FILE" =~ \.jsonl$ ]]; then
+            mv "$CHUNK_FILE" "${CHUNK_FILE}.jsonl"
+        fi
+    done
+    echo "  ✓ Renamed chunks to include .jsonl extension"
+fi
+
+# Check again after renaming
 CHUNK_COUNT=$(ls -1 ${CHUNK_DIR}/pile-corpus-chunk-*.jsonl 2>/dev/null | wc -l)
 if [ ${CHUNK_COUNT} -eq ${NUM_CHUNKS} ]; then
-    echo "  Chunks already exist, skipping split..."
+    echo "  Chunks already exist (${CHUNK_COUNT} chunks), skipping split..."
 else
     echo "  Splitting file..."
     split -l ${CHUNK_SIZE} --numeric-suffixes=1 --suffix-length=3 \
@@ -76,8 +92,8 @@ else
     # Rename chunks to add .jsonl extension
     echo "  Adding .jsonl extension to chunks..."
     for CHUNK_FILE in ${CHUNK_DIR}/pile-corpus-chunk-*; do
-        # Skip if already has .jsonl extension
-        if [[ ! "$CHUNK_FILE" =~ \.jsonl$ ]]; then
+        # Skip if already has .jsonl extension or is a directory
+        if [[ -f "$CHUNK_FILE" && ! "$CHUNK_FILE" =~ \.jsonl$ ]]; then
             mv "$CHUNK_FILE" "${CHUNK_FILE}.jsonl"
         fi
     done
