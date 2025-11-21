@@ -68,9 +68,10 @@ def sample_from_dataset(dataset, target_tokens, tokenizer, dataset_name, seed=42
                     break
                 example = dataset[indices[idx]]
             
-            # Extract text field
+            # Extract text field - The Stack uses "content", other datasets use "text"
             if isinstance(example, dict):
-                text = example.get("text", "")
+                # Try common field names in order of preference
+                text = example.get("text") or example.get("content") or example.get("code") or ""
             else:
                 text = str(example)
             
@@ -118,9 +119,10 @@ def sample_from_multiple_streaming_datasets(datasets, target_tokens, tokenizer, 
         try:
             example = next(dataset_iter)
             
-            # Extract text field
+            # Extract text field - The Stack uses "content", other datasets use "text"
             if isinstance(example, dict):
-                text = example.get("text", "")
+                # Try common field names in order of preference
+                text = example.get("text") or example.get("content") or example.get("code") or ""
             else:
                 text = str(example)
             
@@ -357,6 +359,21 @@ def main():
             trust_remote_code=True
         )
         print("Note: Using full The Stack dataset (not filtered to Python-only)")
+        
+        # Debug: Check first example to see field structure
+        print("Checking dataset structure...")
+        try:
+            first_example = next(iter(stack_dataset))
+            print(f"Available fields in first example: {list(first_example.keys()) if isinstance(first_example, dict) else 'Not a dict'}")
+            # The Stack typically uses "content" field, not "text"
+            if isinstance(first_example, dict):
+                text_field = first_example.get("content") or first_example.get("text") or first_example.get("code")
+                if text_field:
+                    print(f"Found text field with {len(str(text_field))} characters")
+                else:
+                    print(f"Warning: No obvious text field found. Example keys: {list(first_example.keys())}")
+        except Exception as debug_e:
+            print(f"Could not inspect first example: {debug_e}")
         
         stack_texts, actual_tokens = sample_from_dataset(
             stack_dataset, stack_tokens, tokenizer, "The Stack", seed=args.seed + 1, is_streaming=True
