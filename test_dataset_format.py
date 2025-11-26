@@ -11,11 +11,11 @@ print("Testing OPUS Global Voices Dataset Loading")
 print("="*60)
 
 try:
-    print("\n1. Loading dataset with 'en-es' config (test split)...")
+    print("\n1. Loading dataset with 'en-es' config (train split - only available split)...")
     dataset = load_dataset(
         "sentence-transformers/parallel-sentences-global-voices",
         "en-es",
-        split="test",
+        split="train",
         trust_remote_code=True
     )
     

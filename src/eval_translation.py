@@ -123,18 +123,46 @@ def load_opus_globalvoices(
         max_samples: Maximum number of samples to load
         cache_dir: Cache directory for HuggingFace datasets
     """
-    print(f"Loading OPUS Global Voices from HuggingFace (split: {split})...")
+    print(f"Loading OPUS Global Voices from HuggingFace...")
+    print(f"Note: Dataset only has 'train' split, will create {split} split manually")
     
     try:
         # Load dataset from HuggingFace using 'en-es' config for English-Spanish pairs
-        # Note: The dataset uses 'en-es' config (English-Spanish), but we'll extract both directions
-        dataset = load_dataset(
+        # The dataset only has a 'train' split, so we'll load that and split it ourselves
+        full_dataset = load_dataset(
             "sentence-transformers/parallel-sentences-global-voices",
             "en-es",  # Config name for English-Spanish pairs
-            split=split,
+            split="train",  # Only split available
             cache_dir=cache_dir,
             trust_remote_code=True
         )
+        
+        # Create train/validation/test splits manually
+        total_size = len(full_dataset)
+        
+        if split == "test":
+            # Use last 10% for test
+            start_idx = int(total_size * 0.9)
+            end_idx = total_size
+            dataset = full_dataset.select(range(start_idx, end_idx))
+            print(f"Created test split: {len(dataset)} examples (from {start_idx} to {end_idx})")
+        elif split == "validation":
+            # Use 10-20% for validation
+            start_idx = int(total_size * 0.1)
+            end_idx = int(total_size * 0.2)
+            dataset = full_dataset.select(range(start_idx, end_idx))
+            print(f"Created validation split: {len(dataset)} examples (from {start_idx} to {end_idx})")
+        elif split == "train":
+            # Use first 90% for training
+            start_idx = 0
+            end_idx = int(total_size * 0.9)
+            dataset = full_dataset.select(range(start_idx, end_idx))
+            print(f"Created train split: {len(dataset)} examples (from {start_idx} to {end_idx})")
+        else:
+            # Use all data
+            dataset = full_dataset
+            print(f"Using full dataset: {len(dataset)} examples")
+            
     except Exception as e:
         print(f"Error loading from HuggingFace: {e}")
         raise Exception(f"Could not load OPUS Global Voices from HuggingFace: {e}")
