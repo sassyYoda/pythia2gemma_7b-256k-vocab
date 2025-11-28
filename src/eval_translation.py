@@ -54,6 +54,70 @@ def load_model_and_tokenizer(
     return model, tokenizer
 
 
+def clean_translation_output(translation: str, prompt: str) -> str:
+    """Clean translation output by removing prompts, repetitive patterns, and formatting issues."""
+    if not translation:
+        return ""
+    
+    # Remove any prompt that might have been regenerated
+    prompt_clean = prompt.strip()
+    while translation.startswith(prompt_clean):
+        translation = translation[len(prompt_clean):].strip()
+    
+    # Remove common prompt patterns
+    patterns_to_remove = [
+        r'^Spanish:.*?English:\s*',
+        r'^English:\s*',
+        r'^Spanish:\s*',
+    ]
+    for pattern in patterns_to_remove:
+        translation = re.sub(pattern, '', translation, flags=re.IGNORECASE | re.DOTALL)
+    
+    # Remove numbered list patterns (1. 2. 3. etc.) - take only first item
+    # Match patterns like "1. text 2. text" or "1) text 2) text"
+    numbered_pattern = r'^\s*\d+[\.\)]\s*(.+?)(?:\s+\d+[\.\)]|$)'
+    match = re.match(numbered_pattern, translation, re.DOTALL)
+    if match:
+        translation = match.group(1).strip()
+    
+    # Remove repetitive patterns - if same phrase repeats 3+ times, take first occurrence
+    words = translation.split()
+    if len(words) > 10:
+        # Check for repetition in first 50 words
+        first_50 = ' '.join(words[:50])
+        # Simple heuristic: if a 5-word phrase repeats, it's likely a loop
+        for i in range(len(words) - 10):
+            phrase = ' '.join(words[i:i+5])
+            if first_50.count(phrase) >= 3:
+                # Take everything up to the first repetition
+                translation = ' '.join(words[:i+5])
+                break
+    
+    # Remove language labels (Spanish:, French:, Italian:, etc.)
+    translation = re.sub(r'\b(Spanish|French|Italian|German|Portuguese|Dutch|Polish|Danish|Russian):\s*', '', translation, flags=re.IGNORECASE)
+    
+    # Remove citation-like patterns (e.g., "[1]", "[2]", etc.)
+    translation = re.sub(r'\[\d+\]', '', translation)
+    
+    # Remove excessive whitespace and newlines
+    translation = ' '.join(translation.split())
+    
+    # Stop at common sentence endings if there's excessive repetition
+    # If we see the same sentence structure repeating, truncate
+    sentences = re.split(r'[.!?]\s+', translation)
+    if len(sentences) > 1:
+        # Check if first sentence repeats
+        first_sent = sentences[0]
+        if first_sent and len(first_sent) > 10:
+            # Count how many sentences start similarly
+            similar_count = sum(1 for s in sentences[1:6] if s.startswith(first_sent[:20]))
+            if similar_count >= 2:
+                # Just return first sentence
+                translation = sentences[0] + '.'
+    
+    return translation.strip()
+
+
 def is_valid_text(text: str) -> Tuple[bool, Optional[str]]:
     """Check if text passes quality filters.
     
@@ -149,15 +213,8 @@ def generate_translation(
     generated_ids = outputs[0][input_length:]
     translation = tokenizer.decode(generated_ids, skip_special_tokens=True)
     
-    # Clean up: remove any prompt that might have been regenerated
-    # Check if translation starts with the prompt and remove it
-    if translation.startswith(prompt):
-        translation = translation[len(prompt):].strip()
-    
-    # Remove any repeated prompt patterns
-    prompt_clean = prompt.strip()
-    while translation.startswith(prompt_clean):
-        translation = translation[len(prompt_clean):].strip()
+    # Clean up the translation
+    translation = clean_translation_output(translation, prompt)
     
     return translation.strip()
 
@@ -214,17 +271,9 @@ def generate_translations_batch(
         generated_ids = output[input_len:]
         translation = tokenizer.decode(generated_ids, skip_special_tokens=True)
         
-        # Clean up: remove any prompt that might have been regenerated
+        # Clean up the translation
         prompt = prompts[i]
-        prompt_clean = prompt.strip()
-        
-        # Remove prompt if it appears at the start
-        if translation.startswith(prompt_clean):
-            translation = translation[len(prompt_clean):].strip()
-        
-        # Remove any repeated prompt patterns
-        while translation.startswith(prompt_clean):
-            translation = translation[len(prompt_clean):].strip()
+        translation = clean_translation_output(translation, prompt)
         
         translations.append(translation.strip())
     
@@ -460,6 +509,13 @@ def evaluate_translation(
     if len(sentence_bleus) > 0:
         non_zero_count = sum(1 for s in sentence_bleus if s > 0)
         print(f"  Sentence-level BLEU: {non_zero_count}/{len(sentence_bleus)} sentences have non-zero BLEU")
+        
+        # Print sample translations for debugging
+        print(f"\n  Sample translations (first 3):")
+        for i in range(min(3, len(predictions))):
+            print(f"    [{i+1}] Prediction: {predictions[i][:100]}...")
+            print(f"        Reference: {references[i][:100]}...")
+            print(f"        BLEU: {sentence_bleus[i]:.4f}")
     
     results = {
         "direction": direction,
