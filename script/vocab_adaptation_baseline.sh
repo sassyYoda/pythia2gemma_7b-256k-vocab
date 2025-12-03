@@ -11,12 +11,12 @@ export MASTER_PORT=16899
 
 export MODEL="1b"
 
-export TGT="qwen2-7b"
+export TGT="gemma-7b"
 
 # Baseline uses original Pythia-1B model
 MODEL_NAME="EleutherAI/pythia-1b"
 
-# Baseline uses Pythia-tokenized dataset (not Qwen2-7B-tokenized)
+# Baseline uses Pythia-tokenized dataset (not Gemma-7B-tokenized)
 export DATASET_PATH="./data/pretrain-dataset/pile00-pythia-tokenized"
 # export DATASET_PATH="./data/pretrain-dataset/pile00-sample-pythia-tokenized"
 

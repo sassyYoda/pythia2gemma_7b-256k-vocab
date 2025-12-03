@@ -28,7 +28,7 @@ if [ -d "./data" ]; then
     echo "  - Pretrain datasets:"
     du -sh ./data/pretrain-dataset/* 2>/dev/null | sort -h | head -10
     echo "  - Model checkpoints:"
-    du -sh ./data/pythia2qwen2-7b/* 2>/dev/null | sort -h 2>/dev/null || echo "    (none)"
+    du -sh ./data/pythia2gemma-7b/* 2>/dev/null | sort -h 2>/dev/null || echo "    (none)"
     echo "  - Cache:"
     du -sh ./data/cache 2>/dev/null || echo "    (none)"
 else
@@ -57,9 +57,9 @@ du -sh ./data/pretrain-corpus/chunks 2>/dev/null || echo "  (none)"
 echo "Tokenized chunks:"
 du -sh ./data/pretrain-dataset/chunks-tokenized 2>/dev/null || echo "  (none)"
 echo "Final tokenized dataset:"
-du -sh ./data/pretrain-dataset/pile00-qwen2-7b-tokenized 2>/dev/null || echo "  (none)"
+du -sh ./data/pretrain-dataset/pile00-gemma-7b-tokenized 2>/dev/null || echo "  (none)"
 echo "Final models:"
-du -sh ./log/1b/0_qwen2-7b_S*/checkpoint-2500 2>/dev/null | head -2 || echo "  (none)"
+du -sh ./log/1b/0_gemma-7b_S*/checkpoint-2500 2>/dev/null | head -2 || echo "  (none)"
 echo ""
 
 echo "=========================================="

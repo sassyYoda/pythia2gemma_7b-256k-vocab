@@ -18,13 +18,13 @@ export DATASET_PATH1="${MAIN_DIR}/data/pretrain-dataset/mix-pythia-tok"
 export GLOVE_TRAIN_PATH1="${MAIN_DIR}/data/pretrain-dataset/mix-pythia-glove"
 
 # Target Tokenizer
-export MODLE_PATH2="Qwen/Qwen2-7B"
-export TOKENIZER_PATH2="Qwen/Qwen2-7B"
+export MODLE_PATH2="google/gemma-7b"
+export TOKENIZER_PATH2="google/gemma-7b"
 
-export DATASET_PATH2="${MAIN_DIR}/data/pretrain-dataset/mix-qwen2-7b-tok"
-export GLOVE_TRAIN_PATH2="${MAIN_DIR}/data/pretrain-dataset/mix-qwen2-7b-glove"
+export DATASET_PATH2="${MAIN_DIR}/data/pretrain-dataset/mix-gemma-7b-tok"
+export GLOVE_TRAIN_PATH2="${MAIN_DIR}/data/pretrain-dataset/mix-gemma-7b-glove"
 
-export MATRIX_EVAL_PATH="${MAIN_DIR}/data/pretrain-dataset/pythia-2-qwen2-7b-glove-eval-mix"
+export MATRIX_EVAL_PATH="${MAIN_DIR}/data/pretrain-dataset/pythia-2-gemma-7b-glove-eval-mix"
 
 export NUM_WORKERS=48
 

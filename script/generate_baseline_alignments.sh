@@ -7,10 +7,10 @@ cd ${MAIN_DIR}
 
 # Source and target tokenizers
 export SOURCE_TOKENIZER="EleutherAI/pythia-1b"
-export TARGET_TOKENIZER="Qwen/Qwen2-7B"
+export TARGET_TOKENIZER="google/gemma-7b"
 
 # Output directory for baseline alignment matrices
-export OUTPUT_DIR="${MAIN_DIR}/data/pythia2qwen2-7b"
+export OUTPUT_DIR="${MAIN_DIR}/data/pythia2gemma-7b"
 
 # Random seed
 export SEED=42

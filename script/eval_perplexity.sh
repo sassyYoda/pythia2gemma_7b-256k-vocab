@@ -7,7 +7,7 @@ cd ${MAIN_DIR}
 
 # Model configuration (adjust based on your training setup)
 export MODEL="1b"
-export TGT="qwen2-7b"
+export TGT="gemma-7b"
 export SEED=0
 export NUM_STEPS=2500
 

@@ -92,13 +92,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--source-glove-vector-path", type=str, default="./data/glove_vec.pythia.txt")
     parser.add_argument("-s1", "--source-vocab-size", type=int, default=50304)
-    parser.add_argument("-t", "--target-glove-vector-path", type=str, default="./data/glove_vec.qwen2-7b.txt")
-    parser.add_argument("-s2", "--target-vocab-size", type=int, default=151646)
-    parser.add_argument("-g", "--gold-target-to-source-path", type=str, default="./data/Vocab_count/qwen2-7b2pythia.json")
+    parser.add_argument("-t", "--target-glove-vector-path", type=str, default="./data/glove_vec.gemma-7b.txt")
+    parser.add_argument("-s2", "--target-vocab-size", type=int, default=256128)
+    parser.add_argument("-g", "--gold-target-to-source-path", type=str, default="./data/Vocab_count/gemma-7b2pythia.json")
     parser.add_argument("-r", "--relative-representation", action='store_true')
     parser.add_argument("-v", "--vanilla-representation", action='store_true')
     parser.add_argument("-n", "--pivotal-token-number", type=int, default=300)
-    parser.add_argument("-o", "--output-path", type=str, default="./data/pythia2qwen2-7b/glove.json")
+    parser.add_argument("-o", "--output-path", type=str, default="./data/pythia2gemma-7b/glove.json")
 
     args = parser.parse_args()
 

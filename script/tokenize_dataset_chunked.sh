@@ -9,14 +9,14 @@ export MAIN_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd ${MAIN_DIR}
 export CACHE_DIR="${MAIN_DIR}/data/cache"
 
-export MODLE_PATH="./data/pythia2qwen2-7b/TokAlign-Init-1B"
-export TOKENIZER_PATH="./data/pythia2qwen2-7b/TokAlign-Init-1B"
+export MODLE_PATH="./data/pythia2gemma-7b/TokAlign-Init-1B"
+export TOKENIZER_PATH="./data/pythia2gemma-7b/TokAlign-Init-1B"
 
 # Input file
 export TRAIN_FILE="./data/pretrain-corpus/pile-corpus.jsonl"
 
 # Output path
-export DATASET_PATH="./data/pretrain-dataset/pile00-qwen2-7b-tokenized"
+export DATASET_PATH="./data/pretrain-dataset/pile00-gemma-7b-tokenized"
 
 # Chunking settings
 export CHUNK_SIZE=2000000  # Lines per chunk (~2M examples per chunk)

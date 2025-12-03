@@ -6,10 +6,10 @@ export MAIN_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd ${MAIN_DIR}
 
 # Evaluation data path
-export MATRIX_EVAL_DATA_PATH="${MAIN_DIR}/data/pretrain-dataset/pythia-2-qwen2-7b-glove-eval-mix"
+export MATRIX_EVAL_DATA_PATH="${MAIN_DIR}/data/pretrain-dataset/pythia-2-gemma-7b-glove-eval-mix"
 
 # Alignment matrix directory
-export ALIGN_DIR="${MAIN_DIR}/data/pythia2qwen2-7b"
+export ALIGN_DIR="${MAIN_DIR}/data/pythia2gemma-7b"
 
 # TokAlign alignment matrix (your method)
 export TOKALIGN_MATRIX="${ALIGN_DIR}/align_matrix.json"

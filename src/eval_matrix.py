@@ -13,8 +13,8 @@ def read_tsv(file_path):
 
 # BLEU-1
 def eval_trans_matrix(
-    trans_dict_path="./log/pythia2qwen2-7b/glove-MX1M-iter15-d300.json", 
-    eval_file_path="./data/pretrain-dataset/pythia-2-qwen2-7b-MX1K-eval",
+    trans_dict_path="./log/pythia2gemma-7b/glove-MX1M-iter15-d300.json", 
+    eval_file_path="./data/pretrain-dataset/pythia-2-gemma-7b-MX1K-eval",
     bleu_weights=(1, 0, 0, 0),
 ):
     with open(trans_dict_path, "r") as f:
@@ -35,7 +35,7 @@ def eval_trans_matrix(
     total_b4 = 0  # BLEU-4 only
     # for s in tqdm(eval_data):
     for s in eval_data:
-        # src: source token id, e.g., pythia ids, tgt: target token id, e.g., qwen2-7b ids
+        # src: source token id, e.g., pythia ids, tgt: target token id, e.g., gemma-7b ids
         src, tgt = s[0], s[1]
 
         # using td dict by maping target ids to source ids
@@ -69,8 +69,8 @@ def eval_trans_matrix(
 
 # BERT-Score
 def eval_bert_score(
-    trans_dict_path="./log/pythia2qwen2-7b/glove-MX1M-iter15-d300.json",
-    eval_file_path="./data/pretrain-dataset/pythia-2-qwen2-7b-MX1K-eval",
+    trans_dict_path="./log/pythia2gemma-7b/glove-MX1M-iter15-d300.json",
+    eval_file_path="./data/pretrain-dataset/pythia-2-gemma-7b-MX1K-eval",
     tok_path="./data/pythia-1b",
     model_path="all-mpnet-base-v2",
 ):
@@ -121,8 +121,8 @@ def eval_bert_score(
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--evaluate-method", type=str, default="bleu")
-    parser.add_argument("-m", "--one2one-matrix-path", type=str, default="./data/pythia2qwen2-7b/glove.json")
-    parser.add_argument("-f", "--eval-file-path", type=str, default="./data/pretrain-dataset/pythia-2-qwen2-7b-MX1K-eval")
+    parser.add_argument("-m", "--one2one-matrix-path", type=str, default="./data/pythia2gemma-7b/glove.json")
+    parser.add_argument("-f", "--eval-file-path", type=str, default="./data/pretrain-dataset/pythia-2-gemma-7b-MX1K-eval")
     parser.add_argument("-t", "--tokenizer-path", type=str, default="EleutherAI/pythia-1b")
     parser.add_argument("-b", "--bert-score-model-path", type=str, default="all-mpnet-base-v2")
     parser.add_argument("-w", "--bleu-weights", type=str, default="1,0,0,0")

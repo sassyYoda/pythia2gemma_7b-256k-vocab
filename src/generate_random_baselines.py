@@ -94,14 +94,14 @@ if __name__ == '__main__':
     parser.add_argument(
         "-t", "--target-tokenizer-path",
         type=str,
-        default="Qwen/Qwen2-7B",
-        help="Target tokenizer path (default: Qwen/Qwen2-7B)"
+        default="google/gemma-7b",
+        help="Target tokenizer path (default: google/gemma-7b)"
     )
     parser.add_argument(
         "-o", "--output-dir",
         type=str,
-        default="./data/pythia2qwen2-7b",
-        help="Output directory for alignment matrices (default: ./data/pythia2qwen2-7b)"
+        default="./data/pythia2gemma-7b",
+        help="Output directory for alignment matrices (default: ./data/pythia2gemma-7b)"
     )
     parser.add_argument(
         "--seed",

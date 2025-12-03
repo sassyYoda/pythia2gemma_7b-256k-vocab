@@ -11,14 +11,14 @@ export TOKENIZER_PATH1="EleutherAI/pythia-1b"
 export GLOVE_TRAIN_PATH1="${MAIN_DIR}/data/pretrain-dataset/mix-pythia-glove"
 export GLOVE_VECTOR_PATH1="${MAIN_DIR}/data/vec-mix-pythia.txt"
 
-export MODLE_PATH2="Qwen/Qwen2-7B"
-export TOKENIZER_PATH2="Qwen/Qwen2-7B"
-export GLOVE_TRAIN_PATH2="${MAIN_DIR}/data/pretrain-dataset/mix-qwen2-7b-glove"
-export GLOVE_VECTOR_PATH2="${MAIN_DIR}/data/vec-mix-qwen2-7b.txt"
+export MODLE_PATH2="google/gemma-7b"
+export TOKENIZER_PATH2="google/gemma-7b"
+export GLOVE_TRAIN_PATH2="${MAIN_DIR}/data/pretrain-dataset/mix-gemma-7b-glove"
+export GLOVE_VECTOR_PATH2="${MAIN_DIR}/data/vec-mix-gemma-7b.txt"
 
-export TGT_ID_2_SRC_ID_GOLD_PATH="${MAIN_DIR}/data/Vocab_count/qwen2-7b2pythia.json"
+export TGT_ID_2_SRC_ID_GOLD_PATH="${MAIN_DIR}/data/Vocab_count/gemma-7b2pythia.json"
 # The output path of token alignment matrix
-export TGT_ID_2_SRC_ID_RES_PATH="${MAIN_DIR}/data/pythia2qwen2-7b/align_matrix.json"
+export TGT_ID_2_SRC_ID_RES_PATH="${MAIN_DIR}/data/pythia2gemma-7b/align_matrix.json"
 
 
 # Stage-1: train glove vectors

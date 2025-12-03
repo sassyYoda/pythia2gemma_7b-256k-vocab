@@ -158,8 +158,8 @@ aggressive_cleanup() {
     echo ""
     echo "KEEPING:"
     echo "  - Final trained models (log/*/checkpoint-2500)"
-    echo "  - Final tokenized dataset (data/pretrain-dataset/pile00-qwen2-7b-tokenized)"
-    echo "  - Alignment matrices (data/pythia2qwen2-7b/align_matrix.json)"
+    echo "  - Final tokenized dataset (data/pretrain-dataset/pile00-gemma-7b-tokenized)"
+    echo "  - Alignment matrices (data/pythia2gemma-7b/align_matrix.json)"
     echo "  - GloVe vectors (data/vec-*.txt)"
     echo ""
     echo "REMOVING:"
@@ -217,7 +217,7 @@ aggressive_cleanup() {
     if [ -d "./data/pretrain-dataset" ]; then
         DATASET_SIZE=$(get_size "./data/pretrain-dataset")
         echo "Tokenized datasets directory size: ${DATASET_SIZE}"
-        echo "  (Keeping final dataset: pile00-qwen2-7b-tokenized)"
+        echo "  (Keeping final dataset: pile00-gemma-7b-tokenized)"
         # Only remove if user confirms - be careful here
     fi
     
@@ -294,6 +294,6 @@ echo "Cleanup complete!"
 echo ""
 echo "To see what was kept:"
 echo "  - Final models: ./log/*/checkpoint-2500"
-echo "  - Alignment matrix: ./data/pythia2qwen2-7b/align_matrix.json"
+echo "  - Alignment matrix: ./data/pythia2gemma-7b/align_matrix.json"
 echo "  - GloVe vectors: ./data/vec-*.txt"
 
