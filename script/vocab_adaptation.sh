@@ -55,6 +55,9 @@ LOG_FILE="${MAIN_DIR}/log/${PREFIX}.log"
 mkdir -p $MODEL_DIR
 
 
+echo "Starting STAGE-1 training..."
+echo "Log file: ${LOG_FILE}"
+
 accelerate launch \
     --config_file ${CONFIG_FILE} \
     --main_process_port ${MASTER_PORT} \
@@ -84,11 +87,32 @@ accelerate launch \
     --finetune_embed_only True \
     --use_flash_attn True 2>&1 >$LOG_FILE
 
+STAGE1_EXIT_CODE=$?
+
+if [ ${STAGE1_EXIT_CODE} -ne 0 ]; then
+    echo ""
+    echo "=========================================="
+    echo "ERROR: STAGE-1 training failed with exit code ${STAGE1_EXIT_CODE}"
+    echo "=========================================="
+    echo "Please check the log file for details: ${LOG_FILE}"
+    echo "STAGE-2 will not run until STAGE-1 completes successfully."
+    exit 1
+fi
+
 # STAGE-2 (only run if STAGE-1 checkpoint exists)
 STAGE1_CHECKPOINT="${MAIN_DIR}/log/${MODEL}/${SEED}_${TGT}_S1/checkpoint-${NUM_STEPS}"
 if [ ! -d "${STAGE1_CHECKPOINT}" ]; then
-    echo "Error: STAGE-1 checkpoint not found at ${STAGE1_CHECKPOINT}"
-    echo "STAGE-1 must complete successfully before running STAGE-2."
+    echo ""
+    echo "=========================================="
+    echo "ERROR: STAGE-1 checkpoint not found at ${STAGE1_CHECKPOINT}"
+    echo "=========================================="
+    echo "STAGE-1 training may have completed but the checkpoint was not saved."
+    echo "Please check:"
+    echo "  1. The log file: ${LOG_FILE}"
+    echo "  2. The output directory: ${MODEL_DIR}"
+    echo "  3. Whether training completed all ${NUM_STEPS} steps"
+    echo ""
+    echo "STAGE-2 will not run until STAGE-1 checkpoint exists."
     exit 1
 fi
 
