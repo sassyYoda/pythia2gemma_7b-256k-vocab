@@ -91,9 +91,20 @@ class ConstantLengthDataset(IterableDataset):
                     break
                 try:
                     sample = next(iterator)[self.content_field]
-                    assert len(sample) == self.seq_length
-                    buffer.append(sample)
-                    buffer_len += len(buffer[-1])
+                    # Handle samples that are longer or shorter than seq_length
+                    if len(sample) >= self.seq_length:
+                        # Split long samples into multiple sequences
+                        for i in range(0, len(sample), self.seq_length):
+                            chunk = sample[i:i + self.seq_length]
+                            if len(chunk) == self.seq_length:
+                                buffer.append(chunk)
+                                buffer_len += len(chunk)
+                    elif len(sample) > 0:
+                        # For shorter samples, pad or skip (skip for now to maintain exact length)
+                        # Only add if it's exactly the right length
+                        if len(sample) == self.seq_length:
+                            buffer.append(sample)
+                            buffer_len += len(sample)
                 except StopIteration:
                     if self.infinite:
                         iterator = iter(self.dataset)
@@ -150,9 +161,16 @@ class ConstantLengthDataset(IterableDataset):
                 }
 
     def sample_mapper(self, sample):
+        input_ids = sample["input_ids"]
+        # Truncate or split if sample is longer than seq_length
+        if len(input_ids) > self.seq_length:
+            input_ids = input_ids[:self.seq_length]
+        elif len(input_ids) < self.seq_length:
+            # Skip samples that are too short (or could pad, but skipping is safer)
+            return None
         return {
-            "input_ids": torch.LongTensor(sample["input_ids"]),
-            "labels": torch.LongTensor(sample["input_ids"]),
+            "input_ids": torch.LongTensor(input_ids),
+            "labels": torch.LongTensor(input_ids),
         }
     
     def multiprocessing_iter(self):
@@ -160,7 +178,14 @@ class ConstantLengthDataset(IterableDataset):
         worker_id = torch.utils.data.get_worker_info().id
         iterator = iter(self.dataset)
 
-        return itertools.islice(map(self.sample_mapper, iterator), worker_id, None, worker_total_num)
+        def filtered_mapper(sample):
+            result = self.sample_mapper(sample)
+            return result if result is not None else None
+        
+        return itertools.islice(
+            filter(lambda x: x is not None, map(filtered_mapper, iterator)), 
+            worker_id, None, worker_total_num
+        )
 
     def __iter__(self):
         if torch.utils.data.get_worker_info() is None:
