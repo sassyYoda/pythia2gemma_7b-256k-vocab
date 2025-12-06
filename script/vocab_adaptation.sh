@@ -21,11 +21,11 @@ export DATASET_PATH="./data/pretrain-dataset/pile00-${TGT}-tokenized"
 
 export CONFIG_FILE="./data/Deepspeed-Configs/zero3.yaml"
 
-export TRAIN_BS=4
+export TRAIN_BS=2
 export EVAL_BS=1
-export GRADIENT_ACC=32
+export GRADIENT_ACC=64
 
-export BLOCK_SIZE=2048
+export BLOCK_SIZE=1024
 
 export SEED=0
 
