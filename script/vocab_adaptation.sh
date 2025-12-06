@@ -1,5 +1,6 @@
 #!/bin/sh
 export CUDA_VISIBLE_DEVICES=0  # Single GPU setup
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True  # Reduce memory fragmentation
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -20,9 +21,9 @@ export DATASET_PATH="./data/pretrain-dataset/pile00-${TGT}-tokenized"
 
 export CONFIG_FILE="./data/Deepspeed-Configs/zero3.yaml"
 
-export TRAIN_BS=8
+export TRAIN_BS=4
 export EVAL_BS=1
-export GRADIENT_ACC=16
+export GRADIENT_ACC=32
 
 export BLOCK_SIZE=2048
 
